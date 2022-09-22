@@ -1,0 +1,182 @@
+#+TITLE: Simple interface between Common Lisp and Maxima
+#+AUTHOR: Juan M. Bello-Rivas
+#+EMAIL: jmbr@superadditive.com
+#+STARTUP: showall
+
+* Introduction
+
+Maxima is a featureful and versatile symbolic computation package. While it runs on most (possibly all) Common Lisp (CL) implementations, using it as an external CL library is not entirely straight-forward despite the fact that the functionality exists. The purpose of this package is to provide a simple interface between Common Lisp and Maxima and facilitate its use.
+
+* Installation
+
+The simplest way to install this package is to compile and install Maxima from source and add the directory =/path/to/maxima/src= to the ASDF registry.
+Next, add =maxima-interface='s directory to the ASDF registry (see [[https://asdf.common-lisp.dev/asdf/Configuring-ASDF-to-find-your-systems.html][ASDF documentation]] for details).
+
+* High level interface
+
+The aim of this interface is to translate and evaluate expressions back and forth from Common Lisp to Maxima's internal representation as seamlessly as possible.
+
+** =diff=
+
+Takes the (partial) derivative of an s-expression with regard to a variable, possibly more than once.
+
+*** Examples
+
+#+begin_src lisp
+MAXIMA-INTERFACE-USER> (diff '(sin x) 'x)
+(COS X)
+#+end_src
+
+#+begin_src lisp
+MAXIMA-INTERFACE-USER> (diff '(* (expt x 2) (expt y 3)) 'x 2)
+(* 2 (EXPT Y 3))
+#+end_src
+
+** =integrate=
+
+Evaluate the definite or indefinite integral of an s-expression with respect to a symbol.
+
+*** Examples
+
+#+begin_src lisp
+MAXIMA-INTERFACE-USER> (integrate '(* (exp x) (sin (exp x))) 'x)
+(* -1 (COS (EXPT (EXP 1) X)))
+#+end_src
+
+#+begin_src lisp
+MAXIMA-INTERFACE-USER> (integrate '(/ x) 'x 1 '(exp 1))
+1
+#+end_src
+
+** =expand=
+
+Expands products.
+
+*** Examples
+
+#+begin_src lisp
+MAXIMA-INTERFACE-USER> (expand '(expt (+ x y) 2))
+(+ (EXPT X 2) (* 2 X Y) (EXPT Y 2))
+#+end_src
+
+** =simplify=
+
+Applies trigonometric and rational simplifications.
+
+*** Examples
+
+#+begin_src lisp
+MAXIMA-INTERFACE-USER> (simplify '(/ (1- (1+ x)) 1))
+X
+#+end_src
+
+#+begin_src lisp
+MAXIMA-INTERFACE-USER> (simplify '(+ (expt (cos x) 2) (expt (sin x) 2)))
+1
+#+end_src
+
+** =limit=
+
+Takes the limit of an s-expression with regard to a symbol.
+
+*** Examples
+
+#+begin_src lisp
+MAXIMA-INTERFACE-USER> (limit '(/ (sin x) x) 'x 0 '+)
+1
+#+end_src
+
+#+begin_src lisp
+MAXIMA-INTERFACE-USER> (limit '(/ (+ (expt x 3) x) (* 2 (expt x 5))) 'x 'inf)
+0
+#+end_src
+
+* Low level interface
+
+** =maxima-init=
+
+This function is called when the module is loaded. It instructs Maxima to set the path names for the packages that will be loaded on-demand when carrying out different types of operations (e.g., simplification, eigendecompositions, etc.).
+
+** =maxima-run=
+
+Evaluates a Maxima expression passed as a string and prints the result.
+
+*** Examples
+
+#+begin_src lisp
+MAXIMA-INTERFACE-USER> (maxima-run "assume(sigma > 0)$" :display2d t)
+[sigma > 0]
+#+end_src
+
+#+begin_src lisp
+MAXIMA-INTERFACE-USER> (maxima-run "integrate(exp(-x^2/(2*sigma^2)), x, -inf, inf);" :display2d t)
+sqrt(2) sqrt(%pi) sigma
+#+end_src
+
+#+begin_src lisp
+MAXIMA-INTERFACE-USER> (maxima-run "exp(-x^2/(2*sigma^2));" :display2d nil :return-expression t)
+%e^-(x^2/(2*sigma^2))
+((MAXIMA::MEXPT MAXIMA::SIMP) MAXIMA::$%E
+ ((MAXIMA::MTIMES MAXIMA::SIMP) ((MAXIMA::RAT MAXIMA::SIMP) -1 2)
+  ((MAXIMA::MEXPT MAXIMA::SIMP) MAXIMA::$SIGMA -2)
+  ((MAXIMA::MEXPT MAXIMA::SIMP) MAXIMA::$X 2)))
+#+end_src
+
+#+begin_src lisp
+MAXIMA-INTERFACE-USER> (maxima-run "trigsimp(cos(x)^2 + sin(x)^2);")
+1
+#+end_src
+
+** =maxima-read=
+
+Takes a Maxima expression (represented as a string) as input and returns its internal representation in (Maxima) Lisp.
+
+*** Example
+
+#+begin_src lisp
+MAXIMA-INTERFACE-USER> (maxima-read "x^2$")
+((MAXIMA::MEXPT) MAXIMA::$X 2)
+#+end_src
+
+** =maxima-eval=
+
+Evaluates the internal Lisp representation of a Maxima expression and returns the internal Lisp representation of its result.
+
+*** Example
+
+#+begin_src lisp
+MAXIMA-INTERFACE-USER> (maxima-eval '((maxima::$expand)
+    ((maxima::mexpt) ((maxima::mplus) maxima::$x maxima::$y) 2)))
+((MAXIMA::MPLUS MAXIMA::SIMP) ((MAXIMA::MEXPT MAXIMA::SIMP) MAXIMA::$X 2)
+ ((MAXIMA::MTIMES MAXIMA::SIMP) 2 MAXIMA::$X MAXIMA::$Y)
+ ((MAXIMA::MEXPT MAXIMA::SIMP) MAXIMA::$Y 2))
+#+end_src
+
+** =maxima-print=
+
+Prints the internal Lisp representation of a Maxima expression in human-readable form to =output-stream= (which is =*standard-output*= by default).
+
+The keyword argument =display2d= is a boolean indicating whether the representation should be done in 2D or not. The keyword argument =return-expression= is another boolean that determines whether the original expression should be returned by =maxima-print=.
+
+*** Example
+
+#+begin_src lisp
+MAXIMA-INTERFACE-USER> (maxima-print '((maxima::%integrate maxima::simp)
+                                       ((maxima::mexpt) maxima::$%e
+                                        ((maxima::mtimes) -1 ((maxima::mexpt) maxima::$x 2)))
+                                       maxima::$x 0 maxima::$inf)
+                                     :display2d t)
+ inf
+/             2
+[      (- 1) x
+I    %e         dx
+]
+/
+ 0
+#+end_src
+
+** Tips
+
+The document [[https://maxima.sourceforge.io/misc/Fateman-Salz_Simplifier_Paper.pdf][Macsyma’s General Simplifier: Philosophy and Operation by R. Fateman]] is a useful guide to better understand the inner workings of Maxima.
+
+It is sometimes useful to execute =:lisp (trace meval)= inside a regular Maxima session (i.e., the REPL you get when invoking =maxima= from the command line) to see how commands are processed.
