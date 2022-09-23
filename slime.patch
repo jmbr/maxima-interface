@@ -1,0 +1,60 @@
+diff --git a/contrib/slime-media.el b/contrib/slime-media.el
+index cb839eb2..987cc2ba 100644
+--- a/contrib/slime-media.el
++++ b/contrib/slime-media.el
+@@ -20,10 +20,14 @@
+ (defun slime-dispatch-media-event (event)
+   (slime-dcase event
+     ((:write-image image string)
+-     (let ((img (or (find-image (slime-media-decode-image image))
+-                    (create-image image))))
++     (let ((img (create-image image nil nil)))
+        (slime-media-insert-image img string))
+      t)
++    ((:write-latex latex-string)
++     (let ((shell-command (concat "tex2svg -- '" latex-string "'")))
++       (let ((svg (create-image (shell-command-to-string shell-command) 'svg t)))
++         (slime-media-insert-image svg latex-string)))
++     t)
+     ((:popup-buffer bufname string mode)
+      (slime-with-popup-buffer (bufname :connection t :package t)
+        (when mode (funcall mode))
+@@ -36,9 +40,10 @@
+   (with-current-buffer (slime-output-buffer)
+     (let ((marker (slime-repl-output-target-marker :repl-result)))
+       (goto-char marker)
++      ;; (insert-image image string)
+       (slime-propertize-region `(face slime-repl-result-face
+                                       rear-nonsticky (face))
+-        (insert-image image string))
++        (insert-image image (substring (format "%S" string) 1 -1)))
+       ;; Move the input-start marker after the REPL result.
+       (set-marker marker (point)))
+     (slime-repl-show-maximum-output)))
+diff --git a/contrib/slime-quicklisp.el b/contrib/slime-quicklisp.el
+index 97f5ece8..cd748fb0 100644
+--- a/contrib/slime-quicklisp.el
++++ b/contrib/slime-quicklisp.el
+@@ -26,7 +26,8 @@
+   "Read a Quick system name from the minibuffer, prompting with PROMPT."
+   (let* ((completion-ignore-case nil)
+          (prompt (or prompt "Quicklisp system"))
+-         (quicklisp-system-names (slime-eval `(swank:list-quicklisp-systems)))
++         (quicklisp-system-names (slime-eval `(cl:nconc (swank:list-quicklisp-systems)
++                                                        (ql:list-local-systems))))
+          (prompt (concat prompt (if default-value
+                                     (format " (default `%s'): " default-value)
+                                   ": "))))
+diff --git a/swank.lisp b/swank.lisp
+index a5032d5e..3784a5de 100644
+--- a/swank.lisp
++++ b/swank.lisp
+@@ -1041,7 +1041,7 @@ The processing is done in the extent of the toplevel restart."
+            :new-package :new-features :ed :indentation-update
+            :eval :eval-no-wait :background-message :inspect :ping
+            :y-or-n-p :read-from-minibuffer :read-string :read-aborted :test-delay
+-           :write-image :ed-rpc :ed-rpc-no-wait)
++           :write-image :write-latex :ed-rpc :ed-rpc-no-wait)
+           &rest _)
+          (declare (ignore _))
+          (encode-message event (current-socket-io)))

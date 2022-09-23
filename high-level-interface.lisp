@@ -30,7 +30,7 @@
     (diff   . (maxima::%derivative)))
   "Association list for translating Lisp to Maxima")
 
-(defparameter *maxima-to-lisp-operations*
+(defparameter *maxima-to-lisp/operations*
   '((maxima::mequal      . =)
     (maxima::mnotequal   . /=)
     (maxima::mplus       . +)
@@ -63,7 +63,7 @@
     (maxima::%limit      . limit))
   "Association list for translating operations from Maxima to Lisp")
 
-(defparameter *maxima-to-lisp-constants*
+(defparameter *maxima-to-lisp/constants*
   '((maxima::$%pi   . pi)
     (maxima::$%e    . (exp 1))
     (maxima::$%i    . (complex 0 1))
@@ -114,9 +114,9 @@
 (defun maxima-to-lisp (sexp)
   "Translate s-expression from Maxima."
   (flet ((translate-op (x)
-           (rest (assoc x *maxima-to-lisp-operations*)))
+           (rest (assoc x *maxima-to-lisp/operations*)))
          (translate-const (x)
-           (rest (assoc x *maxima-to-lisp-constants*))))
+           (rest (assoc x *maxima-to-lisp/constants*))))
     (cond
       ((atom sexp)
        (or (translate-const sexp) sexp))
@@ -127,7 +127,7 @@
                  (maxima-to-lisp x)   ; Omit tags added by Maxima.
                  (cons (maxima-to-lisp x) (maxima-to-lisp xs)))))))))
 
-(defmethod evaluate (sexp)
+(defun evaluate (sexp)
   "Evaluate an expression in Maxima and return its translation to Lisp."
   (maxima-to-lisp (maxima-eval (lisp-to-maxima sexp))))
 

@@ -3,11 +3,13 @@
   :author "Juan M. Bello Rivas <jmbr@superadditive.com>"
   :licence "X11"
   :depends-on ((:version "asdf" "3.1.2")
+               :uiop
                :maxima)
   :serial t
   :components ((:file "package")
                (:file "low-level-interface")
-               (:file "high-level-interface"))
+               (:file "high-level-interface")
+               (:file "latex"))
   :in-order-to ((test-op (test-op "maxima-interface/tests"))))
 
 (defsystem :maxima-interface/tests

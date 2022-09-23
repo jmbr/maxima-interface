@@ -34,7 +34,7 @@ MAXIMA-INTERFACE-USER> (diff '(* (expt x 2) (expt y 3)) 'x 2)
 
 ** =integrate=
 
-Evaluate the definite or indefinite integral of an s-expression with respect to a symbol.
+Evaluates the definite or indefinite integral of an s-expression with respect to a symbol.
 
 *** Examples
 
@@ -180,3 +180,28 @@ I    %e         dx
 The document [[https://maxima.sourceforge.io/misc/Fateman-Salz_Simplifier_Paper.pdf][Macsyma’s General Simplifier: Philosophy and Operation by R. Fateman]] is a useful guide to better understand the inner workings of Maxima.
 
 It is sometimes useful to execute =:lisp (trace meval)= inside a regular Maxima session (i.e., the REPL you get when invoking =maxima= from the command line) to see how commands are processed.
+
+* LaTeX rendering
+
+The expressions returned by Maxima can be rendered in LaTeX using either Emacs, Jupyter notebooks, or printing the LaTeX strings to a stream. The precise output is governed by the special variable =*latex-output*= which can be =:emacs=, =:jupyter=, or =:console=.
+
+The function to accomplish this is named =latex=. The way a symbol is represented in LaTeX can be controlled by the =maxima::texword= property of the symbol's property list (see examples below).
+
+** Jupyter
+
+Using [[https://github.com/yitzchak/common-lisp-jupyter][=common-lisp-jupyter=]] it is easy to interface with a Jupyter notebook. Just run the Common Lisp kernel and start using =maxima-interface=.
+
+#+CAPTION: LaTeX rendering in a Jupyter notebook
+[[file:screenshot-jupyter.png]]
+
+** Emacs
+
+LaTeX can be rendered in a resizable fashion within Emacs using =tex2svg= in order to convert LaTeX strings to SVG files.
+This requires the custom patch to SLIME included in the file [[file:slime.patch]] as well as the [[https://github.com/mathjax/MathJax-demos-node/blob/master/component/tex2svg][=tex2svg= utility]] from MathJax.
+
+#+CAPTION: Emacs rendering
+[[file:screenshot-emacs.png]]
+
+** Console
+
+This is the default setting. It outputs the LaTeX string corresponding to the expression.
