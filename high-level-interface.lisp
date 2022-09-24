@@ -164,13 +164,3 @@ from the direction specified by DIR, which is either one of the PLUS or MINUS sy
                                             (lisp-to-maxima dir)))
                                  (value (list sexp (lisp-to-maxima var) (lisp-to-maxima value)))
                                  (t (list sexp))))))
-
-#| Minimal Maxima REPL (no pun intended)
-(maxima-init)                           ;
-(unwind-protect                         ;
-(catch 'to-lisp                         ;
-(loop                                   ;
-(with-simple-restart (maxima::macsyma-quit "Maxima top-level") ;
-(maxima::macsyma-top-level))))          ;
-(maxima::delete-temp-files))            ;
-|#                                      ;
