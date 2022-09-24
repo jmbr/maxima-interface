@@ -82,13 +82,13 @@ Takes the limit of an s-expression with regard to a symbol.
 *** Examples
 
 #+begin_src lisp
-MAXIMA-INTERFACE-USER> (limit '(/ (sin x) x) 'x 0 '+)
-1
+MAXIMA-INTERFACE-USER> (limit '(/ (+ (expt x 3) x) (* 2 (expt x 5))) 'x 'inf)
+0
 #+end_src
 
 #+begin_src lisp
-MAXIMA-INTERFACE-USER> (limit '(/ (+ (expt x 3) x) (* 2 (expt x 5))) 'x 'inf)
-0
+MAXIMA-INTERFACE-USER> (limit '(/ (sin x) x) 'x 0 'plus)
+1
 #+end_src
 
 * Low level interface

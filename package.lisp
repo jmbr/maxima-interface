@@ -8,6 +8,8 @@
            #:maxima-run
            #:i                          ; High level interface
            #:inf
+           #:plus
+           #:minus
            #:diff
            #:integrate
            #:limit
