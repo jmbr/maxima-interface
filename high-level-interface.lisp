@@ -156,11 +156,10 @@
 
 (defun limit (sexp &optional var value dir)
   "Compute the limit of an s-expression as the variable VAR approaches VALUE
-from the direction specified by DIR, which is either one of the PLUS or MINUS symbols."
+from the direction specified by DIR, which is either one of the PLUS or MINUS
+symbols."
   (declare (type (or null (member plus minus))))
-  (evaluate `(maxima::$limit ,@(cond
-                                 (dir (list sexp (lisp-to-maxima var)
-                                            (lisp-to-maxima value)
-                                            (lisp-to-maxima dir)))
-                                 (value (list sexp (lisp-to-maxima var) (lisp-to-maxima value)))
-                                 (t (list sexp))))))
+  (evaluate `(maxima::$limit ,sexp ,@(mapcar #'lisp-to-maxima
+                                             (cond
+                                               (dir (list var value dir))
+                                               (value (list var value)))))))
